@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚡ PokéScanner — Bot Cartes Pokémon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0c0f;--s1:#111418;--s2:#181c22;--s3:#1e2330;
+  --b1:rgba(255,255,255,0.06);--b2:rgba(255,255,255,0.12);--b3:rgba(255,255,255,0.20);
+  --t1:#e8eaf0;--t2:#8890a0;--t3:#50586a;
+  --yellow:#f5c842;--yw:rgba(245,200,66,0.13);
+  --green:#3ddc84;--gw:rgba(61,220,132,0.12);
+  --red:#ff5f5f;--rw:rgba(255,95,95,0.10);
+  --orange:#ff9340;--ow:rgba(255,147,64,0.12);
+  --blue:#5b9cf6;--bw:rgba(91,156,246,0.12);
+  --vinted:#09B1BA;--vtw:rgba(9,177,186,0.12);
+  --lbc:#FF6E14;--lbcw:rgba(255,110,20,0.12);
+  --ebay:#E53238;--ebw:rgba(229,50,56,0.12);
+  --mono:'Space Mono',monospace;--sans:'DM Sans',sans-serif;
+  --r:10px;--rl:16px;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100vh;font-size:14px;line-height:1.5}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:4px}
+
+/* ── TOPBAR ── */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  background:var(--s1);border-bottom:1px solid var(--b1);
+  display:flex;align-items:center;gap:16px;padding:0 20px;height:58px;
+}
+.logo{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--yellow);display:flex;align-items:center;gap:8px}
+.logo small{color:var(--t3);font-size:11px;font-weight:400}
+.topbar-stats{display:flex;gap:20px;margin-left:16px}
+.tstat{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:12px;color:var(--t3)}
+.tstat b{color:var(--t1)}
+.tstat.g b{color:var(--green)}
+.tstat.y b{color:var(--yellow)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.pill{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font-size:12px;border:1px solid var(--b2);background:var(--s2);color:var(--t3);transition:.3s}
+.pill.on{background:var(--gw);border-color:var(--green);color:var(--green)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.dot.pulse{animation:blink 1.4s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.btn-main{display:flex;align-items:center;gap:7px;padding:8px 18px;border-radius:var(--r);font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--t1);transition:.2s}
+.btn-main:hover{background:var(--s3)}
+.btn-main.start{background:var(--gw);border-color:var(--green);color:var(--green)}
+.btn-main.stop{background:var(--rw);border-color:var(--red);color:var(--red)}
+
+/* ── LAYOUT ── */
+.layout{display:grid;grid-template-columns:300px 1fr;height:calc(100vh - 58px);overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{background:var(--s1);border-right:1px solid var(--b1);overflow-y:auto;padding:16px}
+.stabs{display:flex;gap:2px;background:var(--s2);border-radius:var(--r);padding:3px;margin-bottom:16px}
+.stab{flex:1;padding:7px 4px;background:none;border:none;color:var(--t3);font-family:var(--sans);font-size:11px;cursor:pointer;border-radius:7px;transition:.15s;display:flex;flex-direction:column;align-items:center;gap:2px}
+.stab svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.stab.on{background:var(--s3);color:var(--yellow)}
+.sec{margin-bottom:18px}
+.sec-title{font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--t3);text-transform:uppercase;margin-bottom:10px}
+.margin-big{font-family:var(--mono);font-size:30px;font-weight:700;color:var(--yellow)}
+.margin-sub{font-size:11px;color:var(--t3);margin-bottom:8px}
+input[type=range]{width:100%;accent-color:var(--yellow);cursor:pointer;margin:6px 0}
+.rl{display:flex;justify-content:space-between;font-size:10px;color:var(--t3);font-family:var(--mono)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.lbl{font-size:13px;color:var(--t2)}
+.sub{font-size:11px;color:var(--t3);margin-top:1px}
+input[type=number],select{background:var(--s2);border:1px solid var(--b2);border-radius:var(--r);color:var(--t1);font-family:var(--sans);font-size:13px;padding:6px 10px}
+input[type=number]{width:70px;text-align:right}
+select{width:100%;margin-top:6px;padding:8px 10px}
+input:focus,select:focus{outline:1px solid var(--yellow);border-color:var(--yellow)}
+
+/* condition cards */
+.conds{display:grid;gap:5px}
+.cond{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:var(--r);border:1px solid var(--b1);background:var(--s2);cursor:pointer;transition:.15s;font-size:12px}
+.cond.on{border-color:var(--green);background:var(--gw)}
+.cond-n{font-weight:500;color:var(--t1)}
+.cond-m{font-family:var(--mono);font-size:11px;color:var(--t3)}
+.cond.on .cond-m{color:var(--green)}
+.cond-ck{color:var(--green);font-size:14px;opacity:0;transition:.15s}
+.cond.on .cond-ck{opacity:1}
+
+/* platforms */
+.plats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}
+.plat{padding:8px 4px;border-radius:var(--r);border:1px solid var(--b1);background:var(--s2);color:var(--t3);font-size:11px;font-weight:500;cursor:pointer;text-align:center;transition:.15s;display:flex;flex-direction:column;align-items:center;gap:3px}
+.plat svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.plat.on.vinted{border-color:var(--vinted);color:var(--vinted);background:var(--vtw)}
+.plat.on.lbc{border-color:var(--lbc);color:var(--lbc);background:var(--lbcw)}
+.plat.on.ebay{border-color:var(--ebay);color:var(--ebay);background:var(--ebw)}
+
+/* chips */
+.kw-row{display:flex;gap:5px;margin-bottom:8px}
+.kw-in{flex:1;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r);color:var(--t1);font-family:var(--sans);font-size:12px;padding:7px 10px}
+.kw-in:focus{outline:1px solid var(--yellow);border-color:var(--yellow)}
+.kw-add{background:var(--yellow);border:none;border-radius:var(--r);color:var(--bg);width:32px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:999px;font-size:11px;background:var(--s3);border:1px solid var(--b2);color:var(--t2);cursor:pointer;transition:.15s}
+.chip.on{background:var(--yw);border-color:var(--yellow);color:var(--yellow)}
+.chip .x{font-size:10px;opacity:.4}
+.chip:hover .x{opacity:1}
+
+.save-btn{width:100%;padding:10px;margin-top:14px;background:var(--yellow);border:none;border-radius:var(--r);color:var(--bg);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.15s}
+.save-btn:hover{filter:brightness(1.1)}
+
+/* ── RIGHT PANEL ── */
+.right{display:flex;flex-direction:column;overflow:hidden}
+
+/* results */
+.res-panel{flex:1;overflow-y:auto;padding:20px}
+.res-hd{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.res-title{font-size:15px;font-weight:500}
+.badge-cnt{font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:999px;background:var(--yellow);color:var(--bg);font-weight:700}
+.btn-clr{margin-left:auto;background:none;border:1px solid var(--b2);color:var(--t3);border-radius:var(--r);padding:5px 10px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px}
+.btn-clr:hover{border-color:var(--red);color:var(--red)}
+.empty{text-align:center;padding:60px 20px;color:var(--t3)}
+.empty-icon{font-size:40px;margin-bottom:10px;opacity:.25}
+.opp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}
+.opp{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rl);padding:13px 15px;animation:fadeUp .3s ease;position:relative;overflow:hidden}
+@keyframes fadeUp{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.opp::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.opp.fire{border-color:rgba(245,200,66,.25)}.opp.fire::before{background:var(--yellow)}
+.opp.good{border-color:rgba(61,220,132,.2)}.opp.good::before{background:var(--green)}
+.opp.ok::before{background:var(--blue)}
+.opp-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.opp-name{font-size:13px;font-weight:500;line-height:1.3;flex:1;margin-right:8px}
+.opp-bdg{font-family:var(--mono);font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.opp-bdg.fire{background:var(--yw);color:var(--yellow);border:1px solid rgba(245,200,66,.3)}
+.opp-bdg.good{background:var(--gw);color:var(--green);border:1px solid rgba(61,220,132,.3)}
+.opp-bdg.ok{background:var(--bw);color:var(--blue);border:1px solid rgba(91,156,246,.3)}
+.opp-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.tag{font-size:10px;padding:2px 7px;border-radius:999px;border:1px solid var(--b2);color:var(--t3)}
+.tag.vinted{border-color:rgba(9,177,186,.4);color:var(--vinted);background:rgba(9,177,186,.07)}
+.tag.leboncoin{border-color:rgba(255,110,20,.4);color:var(--lbc);background:rgba(255,110,20,.07)}
+.tag.ebay{border-color:rgba(229,50,56,.4);color:var(--ebay);background:rgba(229,50,56,.07)}
+.opp-prices{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:9px}
+.pbox{background:var(--s2);border-radius:8px;padding:8px 10px}
+.plbl{font-size:10px;color:var(--t3);margin-bottom:2px;text-transform:uppercase;letter-spacing:.05em}
+.pnum{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--t1)}
+.pnum.g{color:var(--green)}.pnum.y{color:var(--yellow)}
+.opp-ft{display:flex;align-items:center;justify-content:space-between}
+.opp-profit{font-size:12px;color:var(--green);display:flex;align-items:center;gap:3px}
+.opp-link{font-size:11px;color:var(--blue);text-decoration:none;display:flex;align-items:center;gap:3px}
+.opp-link:hover{text-decoration:underline}
+
+/* ── LOGS ── */
+.log-panel{background:var(--s1);border-top:1px solid var(--b1);height:220px;display:flex;flex-direction:column}
+.log-hd{display:flex;align-items:center;gap:8px;padding:8px 16px;border-bottom:1px solid var(--b1);background:var(--s2)}
+.log-hd-title{font-size:11px;font-weight:500;color:var(--t2)}
+.pf-btns{display:flex;gap:4px;margin-left:8px}
+.pf-btn{font-size:10px;padding:3px 8px;border-radius:999px;border:1px solid var(--b1);background:none;color:var(--t3);cursor:pointer;font-family:var(--sans);transition:.15s}
+.pf-btn.on{border-color:var(--yellow);color:var(--yellow);background:var(--yw)}
+.log-list{flex:1;overflow-y:auto;padding:4px 16px;font-family:var(--mono);font-size:11px}
+.le{display:flex;gap:8px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.03);animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.le-t{color:var(--t3);white-space:nowrap}
+.le-p{width:72px;white-space:nowrap;flex-shrink:0}
+.le-p.vinted{color:var(--vinted)}.le-p.leboncoin{color:var(--lbc)}.le-p.ebay{color:var(--ebay)}.le-p.sys{color:var(--t3)}
+.le-m{color:var(--t2);flex:1}
+.le.success .le-m{color:var(--green)}.le.warn .le-m{color:var(--orange)}.le.error .le-m{color:var(--red)}
+
+/* scan spinner */
+.spin-wrap{display:none;align-items:center;gap:6px;padding:4px 0}
+.spin-wrap.on{display:flex}
+.spinner{width:10px;height:10px;border:1.5px solid var(--b2);border-top-color:var(--yellow);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin-txt{font-size:11px;color:var(--t3);font-family:var(--mono)}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">⚡ PokéScanner <small>v2.0 — DEMO</small></div>
+  <div class="topbar-stats">
+    <div class="tstat"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> <b id="ts-scanned">0</b> scannées</div>
+    <div class="tstat g"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> <b id="ts-opps">0</b> opportunités</div>
+    <div class="tstat y"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> <b id="ts-time">00:00:00</b></div>
+  </div>
+  <div class="topbar-right">
+    <div class="pill" id="statusPill"><div class="dot" id="statusDot"></div><span id="statusLbl">Arrêté</span></div>
+    <button class="btn-main start" id="toggleBtn" onclick="toggleBot()">
+      <svg id="toggleIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      <span id="toggleLbl">Démarrer</span>
+    </button>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="stabs">
+      <button class="stab on" onclick="showTab('config',this)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>Config
+      </button>
+      <button class="stab" onclick="showTab('kw',this)">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Mots-clés
+      </button>
+      <button class="stab" onclick="showTab('filters',this)">
+        <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>Filtres
+      </button>
+    </div>
+
+    <!-- CONFIG TAB -->
+    <div id="tab-config">
+      <div class="sec">
+        <div class="sec-title">Marge minimale</div>
+        <div class="margin-big" id="marginDisplay">+40%</div>
+        <div class="margin-sub">Profit min pour valider une opportunité</div>
+        <input type="range" id="marginSlider" min="10" max="200" value="40" step="5">
+        <div class="rl"><span>+10%</span><span>+100%</span><span>+200%</span></div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-title">Plateformes</div>
+        <div class="plats">
+          <button class="plat on vinted" data-p="vinted" onclick="togglePlat(this)">
+            <svg viewBox="0 0 24 24"><path d="M3 3h18v4H3z"/><path d="M3 7v14l9-4 9 4V7"/></svg>Vinted
+          </button>
+          <button class="plat on lbc" data-p="lbc" onclick="togglePlat(this)">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>LBC
+          </button>
+          <button class="plat on ebay" data-p="ebay" onclick="togglePlat(this)">
+            <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>eBay
+          </button>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-title">États acceptés</div>
+        <div class="conds">
+          <div class="cond on" data-c="mint" onclick="this.classList.toggle('on')"><div><div class="cond-n">⭐ Neuf / Mint</div><div class="cond-m">×1.00</div></div><span class="cond-ck">✓</span></div>
+          <div class="cond on" data-c="very_good" onclick="this.classList.toggle('on')"><div><div class="cond-n">✅ Très bon état</div><div class="cond-m">×0.85</div></div><span class="cond-ck">✓</span></div>
+          <div class="cond on" data-c="good" onclick="this.classList.toggle('on')"><div><div class="cond-n">👍 Bon état</div><div class="cond-m">×0.65</div></div><span class="cond-ck">✓</span></div>
+          <div class="cond" data-c="correct" onclick="this.classList.toggle('on')"><div><div class="cond-n">⚠️ Correct</div><div class="cond-m">×0.40</div></div><span class="cond-ck">✓</span></div>
+          <div class="cond" data-c="poor" onclick="this.classList.toggle('on')"><div><div class="cond-n">❌ Mauvais état</div><div class="cond-m">×0.20</div></div><span class="cond-ck">✓</span></div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-title">Paramètres</div>
+        <div class="row"><div><div class="lbl">Intervalle scan</div><div class="sub">Secondes entre cycles</div></div><input type="number" id="interval" value="45" min="15" max="3600"></div>
+        <div class="row"><div><div class="lbl">Prix max</div></div><div style="display:flex;align-items:center;gap:4px"><input type="number" id="maxprice" value="100" min="1"><span style="color:var(--t3);font-size:12px">€</span></div></div>
+        <div class="row"><div><div class="lbl">Coeff. confiance CM</div><div class="sub">% de la cote appliqué</div></div><div style="display:flex;align-items:center;gap:4px"><input type="number" id="safetycoeff" value="90" min="50" max="100"><span style="color:var(--t3);font-size:12px">%</span></div></div>
+        <select id="cmprice">
+          <option value="trend">CM — Prix tendance (recommandé)</option>
+          <option value="avg30">CM — Moyenne 30 jours</option>
+          <option value="low">CM — Prix bas</option>
+        </select>
+      </div>
+      <button class="save-btn" onclick="applyConfig()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Appliquer la config
+      </button>
+    </div>
+
+    <!-- KEYWORDS TAB -->
+    <div id="tab-kw" style="display:none">
+      <div class="sec">
+        <div class="sec-title">Cartes recherchées</div>
+        <div class="kw-row">
+          <input class="kw-in" id="kwIn" placeholder='"charizard vmax"...'>
+          <button class="kw-add" onclick="addKw()">+</button>
+        </div>
+        <div class="chips" id="kwChips"></div>
+      </div>
+      <div class="sec" style="margin-top:16px">
+        <div class="sec-title">Mots exclus du titre</div>
+        <div class="kw-row">
+          <input class="kw-in" id="exIn" placeholder='"lot", "proxy"...'>
+          <button class="kw-add" onclick="addEx()">+</button>
+        </div>
+        <div class="chips" id="exChips"></div>
+      </div>
+      <button class="save-btn" onclick="applyConfig()">✓ Appliquer</button>
+    </div>
+
+    <!-- FILTERS TAB -->
+    <div id="tab-filters" style="display:none">
+      <div class="sec">
+        <div class="sec-title">Extensions ciblées</div>
+        <div class="chips" id="setChips"></div>
+      </div>
+      <button class="save-btn" onclick="applyConfig()">✓ Appliquer</button>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <div class="res-panel">
+      <div class="res-hd">
+        <div class="res-title">Opportunités détectées</div>
+        <div class="badge-cnt" id="oppCnt">0</div>
+        <div class="spin-wrap" id="scanSpin"><div class="spinner"></div><span class="spin-txt">Scan en cours…</span></div>
+        <button class="btn-clr" onclick="clearOpps()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          Effacer
+        </button>
+      </div>
+      <div id="oppGrid" class="opp-grid">
+        <div class="empty" id="emptyState">
+          <div class="empty-icon">🃏</div>
+          <div style="font-size:14px;color:var(--t2);margin-bottom:6px">Démarrez le bot pour détecter les bonnes affaires</div>
+          <div style="font-size:12px;color:var(--t3)">Vinted · Leboncoin · eBay — scan continu + cotation Cardmarket</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGS -->
+    <div class="log-panel">
+      <div class="log-hd">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        <span class="log-hd-title">Logs temps réel</span>
+        <div class="pf-btns">
+          <button class="pf-btn on" data-f="all" onclick="filterLog(this)">Tous</button>
+          <button class="pf-btn" data-f="vinted" onclick="filterLog(this)" style="color:var(--vinted)">Vinted</button>
+          <button class="pf-btn" data-f="leboncoin" onclick="filterLog(this)" style="color:var(--lbc)">LBC</button>
+          <button class="pf-btn" data-f="ebay" onclick="filterLog(this)" style="color:var(--ebay)">eBay</button>
+        </div>
+      </div>
+      <div class="log-list" id="logList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+let running = false, scanTimer = null, clockTimer = null, startTs = null;
+let oppCount = 0, scanCount = 0;
+let logFilter = 'all';
+
+let cfg = {
+  margin: 40, maxPrice: 100, interval: 45, safetyCoeff: 90,
+  platforms: ['vinted','lbc','ebay'],
+  conditions: ['mint','very_good','good'],
+  keywords: ['dracaufeu ex','pikachu vmax','charizard holo','lugia neo','mewtwo ex','tortank base set'],
+  exclusions: ['lot','proxy','fake','fantoche','replica'],
+};
+
+// ─── Card database (Cardmarket prices) ───────────────────────────────────────
+const CARD_DB = {
+  'dracaufeu':     {cm:180, sets:['Base Set','Évolutions']},
+  'charizard':     {cm:160, sets:['Base Set','Hidden Fates']},
+  'pikachu vmax':  {cm:28,  sets:['Vivid Voltage']},
+  'pikachu':       {cm:15,  sets:['Base Set','Promo']},
+  'lugia':         {cm:95,  sets:['Neo Genesis']},
+  'mewtwo':        {cm:55,  sets:['Base Set','Shining Legends']},
+  'tortank':       {cm:80,  sets:['Base Set']},
+  'blastoise':     {cm:75,  sets:['Base Set']},
+  'rayquaza':      {cm:140, sets:['Evolving Skies']},
+  'umbreon':       {cm:120, sets:['Evolving Skies']},
+  'sylveon':       {cm:85,  sets:['Evolving Skies']},
+  'gengar':        {cm:45,  sets:['Base Set']},
+  'vaporeon':      {cm:90,  sets:['Evolving Skies']},
+  'espeon':        {cm:110, sets:['Evolving Skies']},
+  'mew':           {cm:35,  sets:['Promo','151']},
+};
+
+const PLATFORMS = ['vinted','leboncoin','ebay'];
+const SETS = ['Base Set','Jungle','Fossil','Neo Genesis','Hidden Fates','Evolving Skies','Paldea Evolved','Obsidian Flames','151'];
+
+// ─── Fake listings generator ──────────────────────────────────────────────────
+function genListing(keyword) {
+  const plat = ['vinted','leboncoin','ebay'][Math.floor(Math.random()*3)];
+  const conditions = [
+    {label:'Neuf / Mint', mult:1.0, key:'mint'},
+    {label:'Très bon état', mult:0.85, key:'very_good'},
+    {label:'Bon état', mult:0.65, key:'good'},
+    {label:'État correct', mult:0.40, key:'correct'},
+    {label:'Mauvais état', mult:0.20, key:'poor'},
+  ];
+  const cond = conditions[Math.floor(Math.random()*conditions.length)];
+  
+  // find matching card
+  let cardKey = null, cardData = null;
+  const kl = keyword.toLowerCase();
+  for (const [k,v] of Object.entries(CARD_DB)) {
+    if (kl.includes(k) || k.includes(kl.split(' ')[0])) { cardKey = k; cardData = v; break; }
+  }
+  if (!cardData) { cardData = {cm: 8 + Math.random()*30}; cardKey = keyword; }
+
+  // price is 20-70% of CM value (creating bargains and bad deals)
+  const ratio = 0.20 + Math.random() * 0.70;
+  const price = +(cardData.cm * ratio).toFixed(2);
+  const extras = ['holo','ex','vmax','gx','v','full art','alt art','secret rare','rainbow','gold'];
+  const extra = Math.random() > 0.5 ? ' ' + extras[Math.floor(Math.random()*extras.length)] : '';
+  const suffix = Math.random() > 0.6 ? ' — ' + (cardData.sets ? cardData.sets[0] : 'Pokémon TCG') : '';
+  const title = keyword.charAt(0).toUpperCase() + keyword.slice(1) + extra + suffix;
+  
+  const urls = {
+    vinted: `https://www.vinted.fr/vetements?search_text=${encodeURIComponent(keyword)}`,
+    leboncoin: `https://www.leboncoin.fr/recherche?text=${encodeURIComponent(keyword)}`,
+    ebay: `https://www.ebay.fr/sch/i.html?_nkw=${encodeURIComponent(keyword+' pokemon')}`,
+  };
+
+  return { title, price, cond, cmPrice: cardData.cm, platform: plat, url: urls[plat] };
+}
+
+// ─── Core analysis ────────────────────────────────────────────────────────────
+function analyzeItem(item) {
+  const { title, price, cond, cmPrice, platform, url } = item;
+  
+  // exclusion check
+  if (cfg.exclusions.some(ex => title.toLowerCase().includes(ex.toLowerCase()))) {
+    log('info', `Exclu: ${title}`, platform); return;
+  }
+  if (price > cfg.maxPrice || price <= 0) {
+    log('info', `Prix hors limite (${price}€): ${title}`, platform); return;
+  }
+  if (!cfg.conditions.includes(cond.key)) {
+    log('info', `État refusé (${cond.label}): ${title}`, platform); return;
+  }
+  if (!cfg.platforms.includes(platform === 'leboncoin' ? 'lbc' : platform)) {
+    return;
+  }
+
+  scanCount++;
+  document.getElementById('ts-scanned').textContent = scanCount;
+
+  const adjustedCm = cmPrice * cond.mult * (cfg.safetyCoeff / 100);
+  const minRevente = price * (1 + cfg.margin / 100);
+  const profitPct = Math.round(((adjustedCm - price) / price) * 100);
+  const profit = +(adjustedCm - price).toFixed(2);
+
+  if (adjustedCm >= minRevente) {
+    const quality = profitPct >= 100 ? 'fire' : profitPct >= 60 ? 'good' : 'ok';
+    log('success', `✓ ${title} | Achat: ${price}€ | Cote ajustée: ${adjustedCm.toFixed(1)}€ | +${profitPct}%`, platform);
+    addOpp({title, price, cond, cmPrice, adjustedCm, profitPct, profit, quality, platform, url});
+  } else {
+    log('info', `✗ ${title} | ${price}€ | Marge: ${profitPct}% < seuil ${cfg.margin}%`, platform);
+  }
+}
+
+// ─── Scan cycle ───────────────────────────────────────────────────────────────
+async function runCycle() {
+  if (!running) return;
+  document.getElementById('scanSpin').classList.add('on');
+  log('info', `── Nouveau cycle — ${cfg.keywords.length} mot(s)-clé(s), ${cfg.platforms.length} plateforme(s) ──`);
+
+  for (const kw of cfg.keywords) {
+    if (!running) break;
+    // Simulate 2-8 results per keyword per platform
+    const count = Math.floor(Math.random() * 7) + 2;
+    log('info', `Scan "${kw}" — ${count} annonce(s) trouvée(s)`);
+    for (let i = 0; i < count; i++) {
+      await sleep(300 + Math.random()*400);
+      if (!running) break;
+      analyzeItem(genListing(kw));
+    }
+    await sleep(800);
+  }
+
+  document.getElementById('scanSpin').classList.remove('on');
+  log('info', `── Cycle terminé — prochain scan dans ${cfg.interval}s ──`);
+  if (running) scanTimer = setTimeout(runCycle, cfg.interval * 1000);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r,ms)); }
+
+// ─── Bot toggle ───────────────────────────────────────────────────────────────
+function toggleBot() {
+  running = !running;
+  const btn = document.getElementById('toggleBtn');
+  const pill = document.getElementById('statusPill');
+  const dot = document.getElementById('statusDot');
+  const lbl = document.getElementById('statusLbl');
+  const icon = document.getElementById('toggleIcon');
+  const tlbl = document.getElementById('toggleLbl');
+
+  if (running) {
+    pill.classList.add('on'); dot.classList.add('pulse'); lbl.textContent = 'Actif';
+    btn.className = 'btn-main stop';
+    icon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+    tlbl.textContent = 'Arrêter';
+    startTs = Date.now();
+    clockTimer = setInterval(updateClock, 1000);
+    log('success', '🚀 Bot démarré — Vinted + Leboncoin + eBay — scan continu activé');
+    runCycle();
+  } else {
+    pill.classList.remove('on'); dot.classList.remove('pulse'); lbl.textContent = 'Arrêté';
+    btn.className = 'btn-main start';
+    icon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
+    tlbl.textContent = 'Démarrer';
+    clearTimeout(scanTimer);
+    clearInterval(clockTimer);
+    document.getElementById('scanSpin').classList.remove('on');
+    log('warn', '⏹ Bot arrêté manuellement');
+  }
+}
+
+function updateClock() {
+  const s = Math.floor((Date.now() - startTs) / 1000);
+  const h = String(Math.floor(s/3600)).padStart(2,'0');
+  const m = String(Math.floor((s%3600)/60)).padStart(2,'0');
+  const sc = String(s%60).padStart(2,'0');
+  document.getElementById('ts-time').textContent = `${h}:${m}:${sc}`;
+}
+
+// ─── UI helpers ───────────────────────────────────────────────────────────────
+function log(level, msg, platform) {
+  const list = document.getElementById('logList');
+  const t = new Date().toLocaleTimeString('fr-FR');
+  const p = platform || 'sys';
+  const div = document.createElement('div');
+  div.className = 'le ' + level;
+  div.dataset.p = p;
+  div.innerHTML = `<span class="le-t">${t}</span><span class="le-p ${p === 'sys' ? 'sys' : p}">[${p}]</span><span class="le-m">${msg}</span>`;
+  if (logFilter !== 'all' && p !== logFilter) div.style.display = 'none';
+  list.insertBefore(div, list.firstChild);
+  while (list.children.length > 300) list.removeChild(list.lastChild);
+}
+
+function addOpp(o) {
+  const empty = document.getElementById('emptyState');
+  if (empty) empty.remove();
+  oppCount++;
+  document.getElementById('oppCnt').textContent = oppCount;
+  document.getElementById('ts-opps').textContent = oppCount;
+
+  const t = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+  const ql = o.quality === 'fire' ? `🔥 +${o.profitPct}%` : o.quality === 'good' ? `✅ +${o.profitPct}%` : `+${o.profitPct}%`;
+  const div = document.createElement('div');
+  div.className = 'opp ' + o.quality;
+  div.innerHTML = `
+    <div class="opp-hd"><div class="opp-name">${o.title}</div><div class="opp-bdg ${o.quality}">${ql}</div></div>
+    <div class="opp-tags">
+      <span class="tag ${o.platform}">${o.platform.toUpperCase()}</span>
+      <span class="tag">${o.cond.label}</span>
+      <span class="tag">${t}</span>
+    </div>
+    <div class="opp-prices">
+      <div class="pbox"><div class="plbl">Achat</div><div class="pnum">${o.price.toFixed(2)}€</div></div>
+      <div class="pbox"><div class="plbl">Cote CM</div><div class="pnum y">${o.cmPrice.toFixed(0)}€</div></div>
+      <div class="pbox"><div class="plbl">Revente est.</div><div class="pnum g">${o.adjustedCm.toFixed(2)}€</div></div>
+    </div>
+    <div class="opp-ft">
+      <div class="opp-profit">▲ Profit estimé : +${o.profit.toFixed(2)}€</div>
+      <a href="${o.url}" target="_blank" class="opp-link">↗ Voir l'annonce</a>
+    </div>`;
+  const grid = document.getElementById('oppGrid');
+  grid.insertBefore(div, grid.firstChild);
+  while (grid.children.length > 100) grid.removeChild(grid.lastChild);
+}
+
+function clearOpps() {
+  oppCount = 0;
+  document.getElementById('oppCnt').textContent = '0';
+  document.getElementById('ts-opps').textContent = '0';
+  document.getElementById('oppGrid').innerHTML = '<div class="empty" id="emptyState"><div class="empty-icon">🃏</div><div style="font-size:14px;color:var(--t2)">Aucune opportunité pour l\'instant</div></div>';
+}
+
+function filterLog(btn) {
+  logFilter = btn.dataset.f;
+  document.querySelectorAll('.pf-btn').forEach(b => b.classList.toggle('on', b === btn));
+  document.querySelectorAll('.le').forEach(e => {
+    e.style.display = (logFilter === 'all' || e.dataset.p === logFilter) ? '' : 'none';
+  });
+}
+
+function showTab(id, btn) {
+  ['config','kw','filters'].forEach(t => document.getElementById('tab-'+t).style.display = t===id?'':'none');
+  document.querySelectorAll('.stab').forEach(b => b.classList.toggle('on', b===btn));
+}
+
+function togglePlat(btn) { btn.classList.toggle('on'); }
+
+function applyConfig() {
+  cfg.margin = parseInt(document.getElementById('marginSlider').value);
+  cfg.maxPrice = parseInt(document.getElementById('maxprice').value);
+  cfg.interval = parseInt(document.getElementById('interval').value);
+  cfg.safetyCoeff = parseInt(document.getElementById('safetycoeff').value);
+  cfg.platforms = Array.from(document.querySelectorAll('.plat.on')).map(b => b.dataset.p);
+  cfg.conditions = Array.from(document.querySelectorAll('.cond.on')).map(c => c.dataset.c);
+  cfg.keywords = Array.from(document.querySelectorAll('#kwChips .chip.on')).map(c => c.dataset.v);
+  cfg.exclusions = Array.from(document.querySelectorAll('#exChips .chip.on')).map(c => c.dataset.v);
+  const btn = document.querySelector('.save-btn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '✓ Sauvegardé !';
+  setTimeout(() => btn.innerHTML = orig, 2000);
+  log('info', `Config mise à jour — marge: +${cfg.margin}%, max: ${cfg.maxPrice}€, interval: ${cfg.interval}s`);
+}
+
+// ─── Slider ───────────────────────────────────────────────────────────────────
+document.getElementById('marginSlider').addEventListener('input', function() {
+  document.getElementById('marginDisplay').textContent = '+' + this.value + '%';
+});
+
+// ─── Chips ────────────────────────────────────────────────────────────────────
+function makeChip(val, active, container) {
+  const s = document.createElement('span');
+  s.className = 'chip' + (active ? ' on' : '');
+  s.dataset.v = val; s.textContent = val;
+  s.onclick = () => s.classList.toggle('on');
+  document.getElementById(container).appendChild(s);
+}
+
+function addKw() {
+  const i = document.getElementById('kwIn'); const v = i.value.trim().toLowerCase();
+  if (!v) return; cfg.keywords.push(v); makeChip(v, true, 'kwChips'); i.value = '';
+}
+function addEx() {
+  const i = document.getElementById('exIn'); const v = i.value.trim().toLowerCase();
+  if (!v) return; cfg.exclusions.push(v); makeChip(v, true, 'exChips'); i.value = '';
+}
+
+document.getElementById('kwIn').addEventListener('keydown', e => { if(e.key==='Enter') addKw(); });
+document.getElementById('exIn').addEventListener('keydown', e => { if(e.key==='Enter') addEx(); });
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+cfg.keywords.forEach(k => makeChip(k, true, 'kwChips'));
+cfg.exclusions.forEach(e => makeChip(e, true, 'exChips'));
+SETS.forEach(s => makeChip(s, true, 'setChips'));
+</script>
+</body>
+</html>
